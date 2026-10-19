@@ -172,4 +172,5 @@ cd frontend && npm run lint && npm test && npm run build
 | `[Errno 10048]` / `address already in use` | port zajęty — użyj innego (sekcja „Inny port WMS”) |
 | Decyzja: „Ponowne potwierdzenie zablokowane” | 5 błędnych PIN-ów; zresetuj konta: `python -m simulator.generate …` (kasuje dane) |
 | Agent LLM: `Brak ANTHROPIC_API_KEY` | ustaw klucz w `.env` lub użyj `--mode heuristic` |
+| `pip install` na Windows: błąd z podpowiedzią „Long Path support” | repozytorium w zbyt długiej ścieżce — sklonuj bliżej korzenia dysku (np. `C:\Projekty\…`) albo włącz obsługę długich ścieżek |
 | Polskie znaki w konsoli Windows | `set PYTHONUTF8=1` / `$env:PYTHONUTF8=1` |
