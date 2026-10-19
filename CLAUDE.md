@@ -37,7 +37,7 @@ pytest -m solver               # solver i heurystyki
 
 # dane + uruchomienie
 python -m simulator.generate --seed 42 --size small
-python -m uvicorn wms.main:app --reload                       # WMS API :8000 (OpenAPI: /docs)
+python -m uvicorn wms.main:create_app --factory                # WMS API :8000 (OpenAPI: /docs)
 python -m mcp_wms --transport stdio                           # lub --transport http
 python -m orchestrator --mode heuristic --cycles 1            # bez LLM
 python -m optimizer.benchmark --seed 42 --orders 40
