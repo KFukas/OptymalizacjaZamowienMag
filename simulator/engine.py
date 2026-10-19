@@ -6,7 +6,8 @@ Równolegle generuje napływ zamówień (proces Poissona z profilem godzinowym).
 
 Czas: `env.now` to sekundy od `base_time` (SimState.sim_now w chwili startu silnika).
 Tempo: co `tick` sekund rzeczywistych symulacja przesuwa się o `tick * speed` sekund.
-Zapisy do DB odbywają się pod `WRITE_LOCK` (wspólnym z API) — jeden pisarz naraz.
+Zapisy do DB odbywają się pod `WRITE_LOCK` (wspólnym z API) — jeden pisarz naraz. Blokadę bierze tylko
+`advance()` (oraz sterowanie z wątku API); procesy SimPy wykonują się wewnątrz `advance()` i jej nie biorą.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from __future__ import annotations
 import logging
 import threading
 from collections.abc import Callable, Generator
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
@@ -63,7 +65,7 @@ class SimulationEngine:
     def __init__(
         self,
         session_factory: sessionmaker[Session],
-        write_lock: threading.RLock,
+        write_lock: AbstractContextManager[Any],
         *,
         tick_seconds: float = 0.5,
         orders_per_day: int | None = None,
@@ -134,7 +136,7 @@ class SimulationEngine:
                 continue
             yield self.env.timeout(dt)
             try:
-                with self.lock, self.sf() as s:
+                with self.sf() as s:
                     self.order_factory.session = s
                     note = None
                     if self.rng.random() < INJECTION_ARRIVAL_P:
@@ -154,7 +156,7 @@ class SimulationEngine:
             yield self.env.timeout(10)
 
     def _dispatch_once(self) -> None:
-        with self.lock, self.sf() as s:
+        with self.sf() as s:
             rows = s.execute(
                 select(PickRoute, Wave)
                 .join(Wave, Wave.id == PickRoute.wave_id)
@@ -206,21 +208,21 @@ class SimulationEngine:
             if stop["type"] == "pick":
                 self.positions[worker_id] = (pos[0], pos[1], "picking")
                 yield self.env.timeout(pick_time * (1 + 0.1 * (int(stop["qty"]) - 1)))
-                with self.lock, self.sf() as s:
+                with self.sf() as s:
                     self._do_pick(s, wave_id, worker_id, stop)
                     r = s.get(PickRoute, route_id)
                     if r is not None:
                         r.progress_stop = i + 1
                     s.commit()
             else:
-                with self.lock, self.sf() as s:
+                with self.sf() as s:
                     r = s.get(PickRoute, route_id)
                     if r is not None:
                         r.progress_stop = i + 1
                     s.commit()
         if pos != self.layout.depot:
             yield from self._walk(worker_id, pos, self.layout.depot, speed)
-        with self.lock, self.sf() as s:
+        with self.sf() as s:
             r = s.get(PickRoute, route_id)
             assert r is not None
             r.status = RouteStatus.DONE.value
@@ -329,7 +331,7 @@ class SimulationEngine:
         with self.pack.request() as req:
             yield req
             yield self.env.timeout(PACK_BASE_S + PACK_PER_LINE_S * lines)
-        with self.lock, self.sf() as s:
+        with self.sf() as s:
             order = s.get(Order, order_id)
             if order is not None and order.status == OrderStatus.PICKED.value:
                 order.status = OrderStatus.PACKED.value
@@ -384,7 +386,7 @@ class SimulationEngine:
 
     def set_running(self, running: bool) -> None:
         self.running = running
-        with self.lock, self.sf() as s:
+        with self.lock, self.sf() as s:  # wywoływane z wątku API (poza advance)
             state = s.get(SimState, 1)
             if state is not None:
                 state.running = running

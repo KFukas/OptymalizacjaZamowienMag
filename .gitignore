@@ -48,3 +48,5 @@ Thumbs.db
 
 # Claude Code — lokalne ustawienia użytkownika
 .claude/settings.local.json
+evals/reports/ci/
+evals/reports/run/

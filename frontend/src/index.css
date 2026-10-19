@@ -31,6 +31,14 @@
   --zone-b: #f4f3ef;
   --zone-c: #eaf6f1;
   --rack: #c3c2b7;
+  /* rampa sekwencyjna heatmapy: mało -> dużo (jasne cofa się ku jasnemu tłu) */
+  --heat-0: #cde2fb;
+  --heat-1: #9ec5f4;
+  --heat-2: #6da7ec;
+  --heat-3: #3987e5;
+  --heat-4: #256abf;
+  --heat-5: #184f95;
+  --heat-6: #0d366b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -58,6 +66,13 @@
     --zone-b: #212120;
     --zone-c: #16231e;
     --rack: #4a4a46;
+    --heat-0: #0d366b;
+    --heat-1: #184f95;
+    --heat-2: #256abf;
+    --heat-3: #3987e5;
+    --heat-4: #6da7ec;
+    --heat-5: #9ec5f4;
+    --heat-6: #cde2fb;
   }
 }
 
@@ -85,6 +100,14 @@
   --zone-b: #212120;
   --zone-c: #16231e;
   --rack: #4a4a46;
+  /* w trybie ciemnym mało = ciemne (cofa się ku tłu), dużo = jasne */
+  --heat-0: #0d366b;
+  --heat-1: #184f95;
+  --heat-2: #256abf;
+  --heat-3: #3987e5;
+  --heat-4: #6da7ec;
+  --heat-5: #9ec5f4;
+  --heat-6: #cde2fb;
 }
 
 html,

@@ -17,6 +17,7 @@ from mcp_wms.policy import PolicyEngine, load_policy
 from mcp_wms.policy.loader import Policy
 from mcp_wms.server import PolicyEnforcedMCP
 from mcp_wms.wms_client import WmsClient
+from tests.conftest import MANAGER_PIN
 from tests.security.conftest import AGENT_TOKEN, ENVIRON, POLICY_PATH, Harness
 from wms.models import AuditLog
 
@@ -61,7 +62,7 @@ async def test_tampered_audit_entry_breaks_hash_chain(harness: Harness) -> None:
     [
         ("GET", "/approvals", None),
         ("GET", "/approvals/APR-000001", None),
-        ("POST", "/approvals/APR-000001/decide", {"decision": "approve", "comment": "xxxxx", "pin": "2468", "expected_version": 1}),
+        ("POST", "/approvals/APR-000001/decide", {"decision": "approve", "comment": "xxxxx", "pin": MANAGER_PIN, "expected_version": 1}),
         ("GET", "/audit", None),
         ("GET", "/audit/verify", None),
         ("POST", "/sim/control", {"action": "pause"}),

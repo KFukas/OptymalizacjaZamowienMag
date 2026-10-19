@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from tests.conftest import MANAGER_PIN
 from tests.security.conftest import Harness
 
 pytestmark = [pytest.mark.security, pytest.mark.anyio]
@@ -69,7 +70,7 @@ async def test_wave_with_assigned_or_cancelled_order(harness: Harness) -> None:
         ).body["request_id"]
     harness.ctx.client.post(
         f"/approvals/{rid}/decide",
-        json={"decision": "approve", "comment": "Potwierdzone.", "pin": "2468", "expected_version": 1},
+        json={"decision": "approve", "comment": "Potwierdzone.", "pin": MANAGER_PIN, "expected_version": 1},
         headers=harness.ctx.manager(),
     )
     async with harness.session() as mcp:

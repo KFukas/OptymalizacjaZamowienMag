@@ -8,22 +8,24 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from simulator.seed_users import seed_users
+from simulator.seed_users import demo_users, seed_users
 from tests.factories import build_minimal
 from wms.config import Settings
 from wms.db import make_engine
 from wms.main import create_app
 
-# Testy nie mogą zależeć od lokalnego .env.
-os.environ.setdefault("DEMO_MANAGER_PIN", "2468")
+# Testy nie mogą zależeć od lokalnego .env ani od nadpisań DEMO_* — używają domyślnych kont z seedu.
+for _var in [k for k in os.environ if k.startswith("DEMO_")]:
+    del os.environ[_var]
 
 TEST_JWT_SECRET = "test-jwt-secret-0123456789-abcdefghijklmnopqrstuvwxyz"
 TEST_MCP_SECRET = "test-mcp-client-secret"
-MANAGER_PASSWORD = "Alfa-Kierownik-2026"
-MANAGER_PIN = "2468"
-MANAGER2_PASSWORD = "Alfa-Kierownik2-2026"
-MANAGER2_PIN = "1357"
-OPERATOR_PASSWORD = "Alfa-Operator-2026"
+_DEMO = {u.username: u for u in demo_users()}  # dane demo są zdefiniowane wyłącznie w seedzie
+MANAGER_PASSWORD = _DEMO["kierownik"].password
+MANAGER_PIN = str(_DEMO["kierownik"].pin)
+MANAGER2_PASSWORD = _DEMO["kierownik2"].password
+MANAGER2_PIN = str(_DEMO["kierownik2"].pin)
+OPERATOR_PASSWORD = _DEMO["operator"].password
 
 
 def make_settings(**overrides: object) -> Settings:

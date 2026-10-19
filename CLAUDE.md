@@ -27,7 +27,7 @@ kierownika zmiany (`POST /approvals/{id}/decide`, JWT roli `kierownik_zmiany` + 
 ```bash
 # środowisko (Python 3.12)
 python -m venv .venv && .venv/Scripts/pip install -e ".[dev]"     # Windows (bash: .venv/bin/pip)
-python scripts/gen_secrets.py >> .env                              # po skopiowaniu .env.example
+python scripts/gen_secrets.py --init                              # .env z losowymi sekretami
 
 # jakość
 ruff check . && ruff format --check . && mypy wms optimizer simulator mcp_wms orchestrator

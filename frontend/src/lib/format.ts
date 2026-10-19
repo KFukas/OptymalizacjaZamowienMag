@@ -5,8 +5,8 @@ export function seriesVar(index: number): string {
   return `var(${SERIES[index % SERIES.length]})`;
 }
 
-/** Sekwencyjna rampa niebieska (jasny -> ciemny) dla heatmapy wielkości. */
-export const BLUE_RAMP = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"];
+/** Sekwencyjna rampa niebieska dla heatmapy (mało -> dużo); wartości per motyw w index.css (--heat-0..6). */
+export const BLUE_RAMP = [0, 1, 2, 3, 4, 5, 6].map((i) => `var(--heat-${i})`);
 /** Druga rampa (pomarańczowa, porządkowa) — liczba osób w alejce. Zwalidowana: jasny koniec >= 2:1 w obu trybach. */
 export const ORANGE_RAMP = ["#f08a5d", "#eb6834", "#c4501f", "#9a3d16"];
 

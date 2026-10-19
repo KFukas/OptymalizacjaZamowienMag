@@ -51,11 +51,13 @@ def main() -> None:
                 page.get_by_role("button", name=label, exact=True).click()
                 page.wait_for_timeout(2500)
                 if tab_id == "manager":
-                    first = page.locator("section:has(h2:text('Kolejka wniosków')) ul li button").first
+                    queue = page.locator("section:has(h2:text('Kolejka wniosków')) ul li button")
+                    flagged = queue.filter(has_text="podejrzane źródło")
+                    first = flagged.first if flagged.count() else queue.first
                     if first.count():
                         first.click()
                         page.wait_for_timeout(1500)
-                page.screenshot(path=str(out / f"{tab_id}-{theme}.png"), full_page=True)
+                page.screenshot(path=str(out / f"{tab_id}-{theme}.png"), full_page=tab_id != "audit")
                 print("zapisano", out / f"{tab_id}-{theme}.png")
             page.close()
         browser.close()

@@ -13,7 +13,10 @@ from wms.models import SimState
 
 # Jedna blokada zapisu na proces WMS: serializuje transakcje zapisujące (API + tick symulatora).
 # SQLite i tak ma jednego pisarza; w PostgreSQL dodatkowo działa blokada wiersza audit_head.
-WRITE_LOCK = threading.RLock()
+# UWAGA: zwykły Lock, nie RLock — FastAPI wykonuje wejście i wyjście zależności-generatora w RÓŻNYCH wątkach
+# puli, a RLock może zwolnić tylko wątek, który go przejął (osierocona blokada = zakleszczenie zapisów).
+# Blokada nie jest reentrantna: kod wykonywany pod nią nie może jej brać ponownie.
+WRITE_LOCK = threading.Lock()
 
 DEFAULT_SIM_START = datetime(2026, 11, 2, 6, 0, 0)
 

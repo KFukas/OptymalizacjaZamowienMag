@@ -184,7 +184,7 @@ def test_engine_executes_released_wave_and_arrivals() -> None:
 def test_kpis_endpoint_after_simulation() -> None:
     from fastapi.testclient import TestClient
 
-    from tests.conftest import OPERATOR_PASSWORD, make_settings
+    from tests.conftest import MANAGER_PASSWORD, OPERATOR_PASSWORD, make_settings
     from wms.main import create_app
 
     engine, _ = _gen(seed=42, size="small")
@@ -206,7 +206,7 @@ def test_kpis_endpoint_after_simulation() -> None:
         r = client.post("/sim/control", json={"action": "reset", "scenario": "notatka_injection"}, headers=h)
         assert r.status_code == 200, r.text
         mtok = client.post(
-            "/auth/login", json={"username": "kierownik", "password": "Alfa-Kierownik-2026"}
+            "/auth/login", json={"username": "kierownik", "password": MANAGER_PASSWORD}
         ).json()["access_token"]
         v = client.get("/audit/verify", headers={"Authorization": f"Bearer {mtok}"}).json()
         assert v["ok"] and v["checked"] >= 4

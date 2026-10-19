@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from simulator.engine import SimulationEngine
 from simulator.generate import generate
-from tests.conftest import MANAGER_PASSWORD, Ctx, make_settings
+from tests.conftest import MANAGER_PASSWORD, MANAGER_PIN, Ctx, make_settings
 from wms.db import make_engine
 from wms.main import create_app
 from wms.models import Order, StockItem, Wave
@@ -114,7 +114,7 @@ def test_cancellation_removes_order_from_validated_wave(ctx: Ctx) -> None:
     ).json()["request_id"]
     r = ctx.client.post(
         f"/approvals/{rid}/decide",
-        json={"decision": "approve", "comment": "Potwierdzone.", "pin": "2468", "expected_version": 1},
+        json={"decision": "approve", "comment": "Potwierdzone.", "pin": MANAGER_PIN, "expected_version": 1},
         headers=ctx.manager(),
     )
     assert r.status_code == 200, r.text

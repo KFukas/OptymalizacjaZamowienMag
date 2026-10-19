@@ -1,0 +1,100 @@
+# Uruchomienie: python scripts/gen_secrets.py --init && docker compose up --build
+# UI: http://localhost:5173 · WMS API: http://localhost:8000/docs · mcp-wms (HTTP): http://localhost:8765/mcp
+name: magazyn-alfa
+
+x-python: &python
+  build: .
+  image: magazyn-alfa/python:1.0.0
+  env_file: .env
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: wms
+      POSTGRES_PASSWORD: wms
+      POSTGRES_DB: wms
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wms"]
+      interval: 3s
+      retries: 30
+
+  optimizer:
+    <<: *python
+    command: ["uvicorn", "optimizer.service:app", "--host", "0.0.0.0", "--port", "8100"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8100/health')"]
+      interval: 5s
+      retries: 20
+
+  wms-api:
+    <<: *python
+    environment:
+      DATABASE_URL: postgresql+psycopg://wms:wms@db:5432/wms
+      OPTIMIZER_URL: http://optimizer:8100
+      SIM_AUTOSTART: "true"
+      SEED_ON_START: "1"
+    ports:
+      - "${WMS_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      optimizer:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      retries: 40
+
+  mcp-wms:
+    <<: *python
+    command: ["python", "-m", "mcp_wms", "--transport", "http"]
+    environment:
+      WMS_URL: http://wms-api:8000
+      MCP_HTTP_HOST: 0.0.0.0
+      MCP_HTTP_PORT: "8765"
+      AUDIT_FALLBACK_PATH: /app/var/audit_fallback_mcp.jsonl
+    ports:
+      - "${MCP_PORT:-8765}:8765"
+    depends_on:
+      wms-api:
+        condition: service_healthy
+
+  # Silnik symulacji działa w procesie WMS (docs/DECYZJE.md, D-009). Ta usługa to narzędzie do
+  # (re)generowania danych scenariusza: docker compose run --rm simulator --scenario black_friday --size medium
+  simulator:
+    <<: *python
+    restart: "no"
+    profiles: ["tools"]
+    entrypoint: ["python", "-m", "simulator.generate"]
+    command: ["--seed", "42", "--size", "small"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://wms:wms@db:5432/wms
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Orkiestrator (tryb bez LLM domyślnie; dla Claude: AGENT_MODE=llm i ANTHROPIC_API_KEY w .env)
+  orchestrator:
+    <<: *python
+    profiles: ["agent"]
+    command: ["sh", "-c", "python -m orchestrator --mode ${AGENT_MODE:-heuristic} --cycles 1000 --every-sim-min 15 --mcp-url http://mcp-wms:8765/mcp"]
+    depends_on:
+      - mcp-wms
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:${WMS_PORT:-8000}
+    ports:
+      - "${UI_PORT:-5173}:80"
+    depends_on:
+      - wms-api
+    restart: unless-stopped
+
+volumes:
+  pgdata:

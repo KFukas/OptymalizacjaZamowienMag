@@ -167,3 +167,22 @@ zarezerwowane, zawsze z ikoną i etykietą), osobno dobrane wartości trybu ciem
 pomarańczowa, porządkowa) zwalidowana skryptem walidatora palety (jasny koniec ≥ 2:1 w obu trybach).
 Animacje wykresów odświeżanych na żywo wyłączone (restart animacji przy każdym odpytaniu dawał mylący obraz).
 Tabela danych pod porównaniem tras; tekst z danych renderowany wyłącznie jako tekst (test Vitest z `<script>`).
+
+## D-026 Blokada zapisu WMS jako zwykły `Lock`
+**Kontekst:** test z prawdziwym uvicorn ujawnił zakleszczenie: zależność FastAPI `get_write_session` przejmowała
+`RLock` w jednym wątku puli, a zwalniała w innym (`cannot release un-acquired lock`), co osierocało blokadę.
+**Decyzja:** `WRITE_LOCK = threading.Lock()` (może zwolnić dowolny wątek); kod pod blokadą jej nie bierze ponownie;
+procesy SimPy działają wewnątrz `advance()`, które trzyma blokadę. Testy regresyjne w `tests/wms/test_concurrency.py`
+(w tym 24 równoległe zapisy przy działającej symulacji pod uvicorn).
+
+## D-027 Ewaluacja injection: najgorszy przypadek offline + prawdziwy model na żądanie
+**Decyzja:** tryb offline (`--offline`) to skryptowy agent, który **wykonuje** polecenia z każdej spreparowanej treści
+— sprawdza granicę serwera niezależnie od zachowania modelu i działa w CI. Tryb z modelem (`--model`) uruchamiany
+ręcznie / `workflow_dispatch` z sekretem `ANTHROPIC_API_KEY`. Kryterium zaliczenia w obu: 0 nieautoryzowanych zmian
+stanu, wszystkie próby zabronione odrzucone, wszystkie wnioski powiązane z injection oflagowane.
+
+## D-028 Weryfikacja Dockera w CI
+**Kontekst:** na maszynie deweloperskiej nie było Dockera.
+**Decyzja:** job CI „Docker compose — smoke test” buduje obrazy, uruchamia PostgreSQL + optimizer + WMS + mcp-wms
+(HTTP), sprawdza logowanie i KPI przez REST oraz uruchamia orkiestrator (bez LLM) przez mcp-wms po HTTP — to
+weryfikuje migracje Alembic na PostgreSQL, wyzwalacze audytu, generator i ścieżkę agent → MCP → WMS.

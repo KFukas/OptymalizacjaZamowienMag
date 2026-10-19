@@ -72,7 +72,7 @@ export function MapPage({ live }: { live: boolean }) {
   const congestion = kpis.data?.congestion_by_aisle ?? {};
   const congMax = Math.max(3, ...Object.values(congestion));
   const workerIndex = (id: string) => Number(id.slice(4)) - 1;
-  const vb = `-3 -2 ${geo.width + 4} ${geo.back_y + 6}`;
+  const vb = `-3 -2 ${geo.width + 4} ${geo.back_y + 8}`;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
@@ -106,16 +106,13 @@ export function MapPage({ live }: { live: boolean }) {
               return (
                 <g key={a.aisle}>
                   {layers.congestion && c > 0 ? (
-                    <rect
-                      x={a.x - 0.4}
-                      y={flipY(geo.back_y - 0.6)}
-                      width={0.8}
-                      height={geo.back_y - 1.2}
-                      fill={rampColor(c, congMax, ORANGE_RAMP)}
-                      opacity={0.85}
-                    >
-                      <title>{`Alejka ${a.aisle}: ${c} pracowników`}</title>
-                    </rect>
+                    <g>
+                      <rect x={a.x - 1.3} y={geo.back_y + 0.25} width={2.6} height={0.75} rx={0.2} fill={rampColor(c, congMax, ORANGE_RAMP)} />
+                      <text x={a.x} y={geo.back_y + 0.82} fontSize={0.6} textAnchor="middle" fill="#fff" fontWeight={700}>
+                        {c}
+                      </text>
+                      <title>{`Alejka ${a.aisle}: ${c} pracowników (zator przy 3+)`}</title>
+                    </g>
                   ) : null}
                   {bays.map((b) => {
                     const left = b % 2 === 1;
@@ -138,7 +135,7 @@ export function MapPage({ live }: { live: boolean }) {
                       </rect>
                     );
                   })}
-                  <text x={a.x} y={geo.back_y + 1.6} fontSize={0.9} textAnchor="middle" fill="var(--text-muted)">
+                  <text x={a.x} y={geo.back_y + 2} fontSize={0.9} textAnchor="middle" fill="var(--text-muted)">
                     {String(a.aisle).padStart(2, "0")}
                   </text>
                 </g>
@@ -159,10 +156,10 @@ export function MapPage({ live }: { live: boolean }) {
                   points={r.path.map(([x, y]) => `${x},${flipY(y)}`).join(" ")}
                   fill="none"
                   stroke={seriesVar(workerIndex(r.worker_id))}
-                  strokeWidth={0.25}
+                  strokeWidth={0.16}
                   strokeLinejoin="round"
                   className={r.status === "active" ? "route-animated" : undefined}
-                  opacity={r.status === "active" ? 0.95 : 0.45}
+                  opacity={r.status === "active" ? 0.9 : 0.35}
                 >
                   <title>{`${r.wave_id} · ${r.worker_id} · ${r.algorithm} · ${num(r.distance_m)} m (S-shape ${num(r.baseline_distance_m)} m)`}</title>
                 </polyline>
@@ -204,8 +201,8 @@ export function MapPage({ live }: { live: boolean }) {
                   // bezczynni w punkcie pakowania: rozłożeni w rzędzie wzdłuż alejki poprzecznej
                   const atDepot = w.state === "idle" && Math.abs(w.x - geo.depot.x) < 0.5 && Math.abs(w.y - geo.depot.y) < 0.5;
                   const idleIdx = all.slice(0, i).filter((o) => o.state === "idle").length;
-                  const x = atDepot ? geo.depot.x + 2.2 + idleIdx * 1.7 : w.x;
-                  const y = atDepot ? flipY(geo.depot.y) + 1 : flipY(w.y);
+                  const x = atDepot ? geo.depot.x + 3 + idleIdx * 1.7 : w.x;
+                  const y = atDepot ? flipY(geo.depot.y) + 3.6 : flipY(w.y);
                   return (
                     <g key={w.worker_id} transform={`translate(${x},${y})`}>
                       <circle r={0.75} fill={st.color} stroke="var(--surface-1)" strokeWidth={0.2} />
@@ -269,7 +266,7 @@ export function MapPage({ live }: { live: boolean }) {
             </div>
           ) : null}
           <div className="mt-3">
-            <div className="text-xs text-ink2">Zator (osoby w alejce): 1 → {congMax}+</div>
+            <div className="text-xs text-ink2">Zator (pasek pod alejką, liczba osób): 1 → {congMax}+</div>
             <div className="mt-1 flex h-3 overflow-hidden rounded">
               {ORANGE_RAMP.map((c) => (
                 <span key={c} className="flex-1" style={{ background: c }} />

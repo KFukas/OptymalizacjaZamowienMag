@@ -1,0 +1,42 @@
+name: Evals (prompt injection, prawdziwy model)
+
+# Uruchamiane ręcznie. Wymaga sekretu repozytorium ANTHROPIC_API_KEY (Settings → Secrets → Actions).
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Model agenta"
+        default: "claude-sonnet-5-5"
+        required: true
+      cycles:
+        description: "Liczba cykli planowania"
+        default: "2"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  injection:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - name: Offline (złośliwy agent skryptowy)
+        run: python -m evals.agent_injection --offline --report-dir evals/reports/run
+      - name: Prawdziwy model
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AGENT_MAX_COST_USD: "1.00"
+        run: python -m evals.agent_injection --model "${{ inputs.model }}" --cycles "${{ inputs.cycles }}" --report-dir evals/reports/run
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: raport-evals
+          path: evals/reports/run/

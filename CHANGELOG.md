@@ -2,7 +2,22 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie: [SemVer](https://semver.org/lang/pl/).
 
-## [Unreleased]
+## [1.0.0] – 2026-10-19
+
+### M7 – Evale, Docker, dokumentacja
+- `evals/agent_injection.py`: tryb offline (złośliwy agent skryptowy, w CI) i z prawdziwym modelem
+  (`workflow_dispatch` z sekretem); raport `evals/reports/RAPORT_<data>_<tryb>.md`. Wynik offline: 0
+  nieautoryzowanych zmian stanu, 37/37 prób zabronionych odrzuconych, 9/9 wniosków z injection oflagowanych.
+- Docker: obraz Pythona (jeden dla WMS, mcp-wms, optymalizatora, symulatora, orkiestratora), frontend (nginx),
+  `docker-compose.yml` (PostgreSQL, migracje i dane demo przy starcie), smoke test compose w CI.
+- Poprawka współbieżności: blokada zapisu WMS przejmowana i zwalniana w różnych wątkach puli FastAPI (D-026)
+  + testy regresyjne pod uvicorn.
+- Frontend: rampa heatmapy zależna od motywu (w trybie ciemnym mało = ciemne), zatory jako pasek pod alejką,
+  bezczynni pracownicy w rzędzie przy pakowaniu.
+- Dokumentacja: README, INSTRUKCJA_URUCHOMIENIA, ARCHITEKTURA, BEZPIECZENSTWO, MCP (generowany), ZATWIERDZENIA,
+  OPTYMALIZACJA, SYMULACJA, SKILL, API, PANEL_KIEROWNIKA, TESTY_BEZPIECZENSTWA, RAPORT_WYKONANIA; zrzuty ekranu.
+- Skrypty: `gen_secrets.py --init`, `dev.ps1`/`dev.sh`, `test.ps1`/`test.sh`, `demo_day.py`, `screenshots.py`,
+  `gen_mcp_docs.py`.
 
 ### M6 – Frontend
 - React 18 + Vite + TypeScript + Tailwind + TanStack Query + Recharts (`frontend/`).
