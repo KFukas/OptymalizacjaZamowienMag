@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mcp-wms": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["scripts/run_mcp_wms.py"],
+      "env": {
+        "WMS_URL": "${WMS_URL:-http://localhost:8000}"
+      }
+    }
+  }
+}

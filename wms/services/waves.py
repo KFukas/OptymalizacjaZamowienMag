@@ -31,6 +31,7 @@ from wms.models import (
     OrderLine,
     PickRoute,
     Shift,
+    SimEvent,
     Sku,
     StockItem,
     Wave,
@@ -74,12 +75,27 @@ def _soft_allocations(session: Session) -> dict[tuple[str, str], int]:
     return {(loc, sku): int(q or 0) for loc, sku, q in rows if loc}
 
 
+STOCKOUT_QUARANTINE = timedelta(hours=8)
+
+
+def _quarantined(session: Session, skus: set[str]) -> set[tuple[str, str]]:
+    """Pary (lokalizacja, SKU) ze zgłoszonym brakiem — wstrzymane z alokacji do czasu liczenia/korekty."""
+    since = sim_now(session) - STOCKOUT_QUARANTINE
+    rows = session.execute(
+        select(SimEvent.location_id, SimEvent.sku_id).where(
+            SimEvent.kind == "stockout", SimEvent.ts_sim >= since, SimEvent.sku_id.in_(skus)
+        )
+    ).all()
+    return {(loc, sku) for loc, sku in rows if loc and sku}
+
+
 def _allocate(session: Session, orders: list[Order]) -> tuple[dict[int, str], list[str]]:
     soft = _soft_allocations(session)
     stock_by_sku: dict[str, list[StockItem]] = defaultdict(list)
     skus = {ln.sku_id for o in orders for ln in o.lines}
     for item in session.execute(select(StockItem).where(StockItem.sku_id.in_(skus))).scalars():
         stock_by_sku[item.sku_id].append(item)
+    blocked = _quarantined(session, skus)
     taken: dict[tuple[str, str], int] = defaultdict(int)
     plan: dict[int, str] = {}
     short_orders: list[str] = []
@@ -91,6 +107,8 @@ def _allocate(session: Session, orders: list[Order]) -> tuple[dict[int, str], li
             best_avail = -1
             for it in stock_by_sku.get(ln.sku_id, []):
                 key = (it.location_id, it.sku_id)
+                if key in blocked:
+                    continue
                 avail = it.qty - it.reserved - soft.get(key, 0) - taken[key]
                 if avail >= ln.qty and (
                     avail > best_avail or (avail == best_avail and it.location_id < (best or ""))

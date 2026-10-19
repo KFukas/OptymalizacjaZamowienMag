@@ -231,3 +231,9 @@ def test_forecast_slotting_suggestions_on_generated_data(generated: TestClient) 
     assert (
         generated.post("/forecast", json={"sku_ids": skus, "horizon_days": 29}, headers=h).status_code == 422
     )
+
+
+def test_location_with_reported_stockout_is_quarantined(ctx: Ctx) -> None:
+    # w danych testowych jest zdarzenie braku EVT-000001 dla LOC-B04-05-1 / SKU-000005
+    r = _propose(ctx, ctx.service(), order_ids=["ORD-00000005"], worker_ids=["WRK-001"])
+    assert r.json()["reason"] == "insufficient_stock"

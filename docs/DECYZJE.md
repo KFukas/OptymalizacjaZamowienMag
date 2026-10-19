@@ -125,3 +125,30 @@ serwer porównuje SHA-256 w czasie stałym, tokeny < 16 znaków są ignorowane. 
 **Decyzja:** notatki klientów, nazwy SKU, komentarze pracowników i uzasadnienia fal zwracane są jako
 `{"untrusted_text", "instruction_signals", "warning"}`. Heurystyka sygnałów nie jest zabezpieczeniem — tylko
 informacją dla modelu i kierownika; zabezpieczeniem jest brak możliwości wykonania operacji nieodwracalnej.
+
+## D-020 Orkiestrator: ręczna pętla tool-use, model konfigurowalny, fallback przy odmowie
+**Decyzja:** pętla `client.beta.messages.create` napisana ręcznie (nie Tool Runner), bo narzędzia wykonuje
+zdalny serwer MCP, a orkiestrator musi liczyć koszt i kroki oraz logować każde wywołanie. Model z `AGENT_MODEL`
+(domyślnie `claude-sonnet-5-5` zgodnie ze specyfikacją; `claude-opus-5-5` jako opcja), wysiłek `AGENT_EFFORT`
+(domyślnie `medium`), myślenie adaptacyjne (domyślne dla tych modeli). Włączony serwerowy fallback przy odmowie
+(`fallbacks="default"`, beta `server-side-fallback-2026-07-01`; wyłączenie: `AGENT_FALLBACKS=0`). Prompt systemowy
+= pliki skilla (jedno źródło prawdy), z `cache_control`; narzędzia w stałej kolejności (stabilny prefiks cache).
+Historia rozmowy tylko dopisywana (pełna treść odpowiedzi wraca bez zmian).
+**Konsekwencje:** limity `AGENT_MAX_STEPS` i `AGENT_MAX_COST_USD` przerywają cykl; raport awaryjny trafia do WMS.
+
+## D-021 Tryb bez LLM jako pełnoprawny agent
+**Decyzja:** `HeuristicAgent` używa wyłącznie tych samych narzędzi MCP i tej samej procedury co skill.
+Decyzje o wnioskach opiera tylko na polach strukturalnych (flaga `suspicious`, zdarzenia `stockout` z `event_ref`),
+nigdy na tekstach. Służy do CI, porównań i jako tryb awaryjny.
+
+## D-022 Kwarantanna lokalizacji po zgłoszonym braku
+**Kontekst:** test end-to-end pokazał, że WMS alokował towar z lokalizacji, w której kompletujący właśnie zgłosił
+brak, co blokowało też wniosek o korektę (`counted_below_reserved`).
+**Decyzja:** para (lokalizacja, SKU) ze zdarzeniem `stockout` w ostatnich 8 h czasu symulacji jest pomijana przy
+alokacji nowych fal (do czasu liczenia/korekty). Agent składa jeden wniosek na parę i ponawia go w kolejnym
+cyklu, jeśli przyczyna odmowy jest przejściowa.
+
+## D-023 Uprawnienia Claude Code w repo
+**Decyzja:** `.claude/settings.json` — allowlista komend testów/lint/benchmarku i narzędzi MCP tylko do odczytu;
+narzędzia zapisujące mcp-wms wymagają potwierdzenia (`ask`); odczyt i edycja `.env` zabronione. Serwer
+`mcp-wms` z `.mcp.json` uruchamiany przez `scripts/run_mcp_wms.py` (wybiera Pythona z `.venv` na Windows/Linux).

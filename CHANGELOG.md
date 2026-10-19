@@ -4,6 +4,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie:
 
 ## [Unreleased]
 
+### M5 – Orkiestrator + skill
+- `python -m orchestrator --mode heuristic|llm --cycles N --every-sim-min M [--mcp-url]`: pętla co N minut
+  symulacji; połączenie z mcp-wms przez stdio (proces potomny) albo streamable HTTP; dziennik wszystkich wywołań
+  narzędzi (`var/orchestrator/tool_calls.jsonl`).
+- Agent LLM (Anthropic SDK): narzędzia z `tools/list` mcp-wms, prompt systemowy z plików skilla z cache,
+  limity kroków i kosztu, obsługa odmowy i serwerowy fallback modelu, raport cyklu w UI.
+- Agent heurystyczny (bez LLM): stan → prognoza → wnioski o korektę z dowodem → fale → trasy OR-Tools →
+  zwolnienie → podejrzane zamówienia → slotting → raport.
+- Skill `.claude/skills/optymalizacja-kompletacji/` (SKILL.md, references: kpi, algorytmy, przykłady;
+  scripts/validate_wave_plan.py), `.mcp.json`, `.claude/settings.json`, launcher `scripts/run_mcp_wms.py`.
+- WMS: kwarantanna lokalizacji po zgłoszonym braku przy alokacji fal.
+
 ### M4 – mcp-wms: serwer MCP z egzekwowaniem polityki
 - 19 wąsko typowanych narzędzi (odczyt, propozycje, wnioski) — bez narzędzi ogólnych i bez operacji
   nieodwracalnych; schematy Pydantic `extra="forbid"`, strict, wzorce ID, zakresy, limity list.

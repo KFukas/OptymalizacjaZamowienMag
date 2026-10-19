@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest:*)",
+      "Bash(.venv/Scripts/python.exe -m pytest:*)",
+      "Bash(.venv/bin/python -m pytest:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)",
+      "Bash(mypy:*)",
+      "Bash(python -m optimizer.benchmark:*)",
+      "Bash(python -m simulator.generate:*)",
+      "Bash(python -m orchestrator --mode heuristic:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm test:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "mcp__mcp-wms__list_open_orders",
+      "mcp__mcp-wms__get_order",
+      "mcp__mcp-wms__get_inventory",
+      "mcp__mcp-wms__get_layout",
+      "mcp__mcp-wms__list_workers",
+      "mcp__mcp-wms__get_kpis",
+      "mcp__mcp-wms__get_wave",
+      "mcp__mcp-wms__suggest_wave_plan",
+      "mcp__mcp-wms__forecast_demand",
+      "mcp__mcp-wms__analyze_slotting",
+      "mcp__mcp-wms__get_approval_status"
+    ],
+    "ask": [
+      "mcp__mcp-wms__propose_wave",
+      "mcp__mcp-wms__release_wave",
+      "mcp__mcp-wms__propose_reslotting",
+      "mcp__mcp-wms__request_order_cancellation",
+      "mcp__mcp-wms__request_inventory_adjustment"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(**/.env)",
+      "Edit(./.env)",
+      "Bash(cat .env:*)",
+      "Bash(type .env:*)",
+      "Bash(git push --force:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": false,
+  "enabledMcpjsonServers": ["mcp-wms"]
+}

@@ -11,7 +11,7 @@ import numpy as np
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from optimizer.forecast import aggregate_wape, forecast_sku
+from optimizer.forecast import forecast_sku
 from optimizer.slotting import (
     SlotLocation,
     SlotSku,
@@ -79,19 +79,18 @@ def forecast(session: Session, sku_ids: list[str], horizon: int) -> dict[str, An
         raise validation("skus_not_found", {"sku_ids": unknown[:20]})
     hist, last = _history(session, sku_ids)
     results = []
-    raw = []
     for sku in sku_ids:
         key = (sku, horizon, last or date.min)
         with _cache_lock:
             cached = _forecast_cache.get(key)
         if cached is None:
-            res = forecast_sku(sku, hist[sku], horizon)
-            raw.append(res)
-            cached = res.as_dict()
+            cached = forecast_sku(sku, hist[sku], horizon).as_dict()
             with _cache_lock:
                 _forecast_cache[key] = cached
         results.append(cached)
-    agg = aggregate_wape(raw) if raw else None
+    weighted = [(r["wape_backtest"], r["mean_daily"]) for r in results if r["wape_backtest"] is not None]
+    den = sum(m for _, m in weighted)
+    agg = sum(w * m for w, m in weighted) / den if den else None
     return {
         "horizon_days": horizon,
         "history_until": last.isoformat() if last else None,
