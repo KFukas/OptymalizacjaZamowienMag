@@ -18,7 +18,7 @@ from wms import __version__, sim_runtime
 from wms.config import Settings, get_settings
 from wms.db import init_db, make_engine, make_sessionmaker
 from wms.errors import DomainError, domain_error_handler, request_validation_handler
-from wms.routers import approvals, audit, auth, catalog, sim
+from wms.routers import approvals, audit, auth, catalog, planning, sim
 
 log = logging.getLogger("wms")
 
@@ -58,7 +58,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.add_exception_handler(DomainError, domain_error_handler)
     app.add_exception_handler(RequestValidationError, request_validation_handler)
 
-    for module in (auth, catalog, approvals, audit, sim):
+    for module in (auth, catalog, approvals, audit, sim, planning):
         app.include_router(module.router)
 
     @app.get("/health", tags=["meta"])

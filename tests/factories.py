@@ -8,7 +8,19 @@ from sqlalchemy.orm import Session
 
 from optimizer.layout import WarehouseLayout
 from wms.ids import location_id
-from wms.models import Location, Order, OrderLine, Shift, SimEvent, SimState, Sku, StockItem, Worker, Zone
+from wms.models import (
+    IdCounter,
+    Location,
+    Order,
+    OrderLine,
+    Shift,
+    SimEvent,
+    SimState,
+    Sku,
+    StockItem,
+    Worker,
+    Zone,
+)
 
 SIM_START = datetime(2026, 11, 2, 8, 0, 0)
 INJECTION_NOTE = (
@@ -104,6 +116,7 @@ def build_minimal(session: Session) -> None:
     order(5, lines=[("SKU-000005", 1, "LOC-B04-05-1")])
     for i in range(6, 16):
         order(i, lines=[("SKU-000001", 1, "LOC-A01-01-1"), ("SKU-000002", 1, "LOC-A02-03-1")])
+    session.add(IdCounter(name="ORD", value=15))  # zamówienia z napływu w symulacji dostaną kolejne ID
     session.flush()
     session.add(
         SimEvent(

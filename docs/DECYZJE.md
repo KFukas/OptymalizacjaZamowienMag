@@ -73,3 +73,30 @@ zamówienia nie dostaną ID celów starych wniosków.
 **Decyzja:** `StockItem.sim_physical_qty` (None = zgodny z systemem) modeluje „prawdę z hali”. Kompletacja
 pobiera min(potrzeba, stan fizyczny); przy niedoborze powstaje zdarzenie `stockout` (`EVT-xxxxxx`), które
 może posłużyć jako dowód we wniosku o korektę. Pole nie jest eksponowane przez API ani MCP.
+
+## D-012 Wspólny podział na kursy dla wszystkich algorytmów tras
+**Decyzja:** pojemność wózka (objętość, liczba zamówień/pojemników) obsługuje `optimizer.batching` — zamówienie
+nigdy nie jest dzielone między kursy (jeden pojemnik na zamówienie). Algorytmy tras porządkują tylko odwiedziny
+w ramach kursu. Dzięki temu benchmark porównuje wyłącznie jakość kolejności.
+**Konsekwencje:** wariant CVRP z dzieleniem zamówień między kursy jest możliwy w OR-Tools, ale komplikuje
+konsolidację przy pakowaniu — świadomie pominięty.
+
+## D-013 Heurystyki z jawną łamaną, OR-Tools startuje od NN
+**Decyzja:** S-shape i largest gap budują łamaną zgodną z definicją heurystyki (pełne przejścia / wejścia do luki),
+NN i OR-Tools łączą odwiedziny najkrótszymi ścieżkami. OR-Tools dostaje rozwiązanie NN jako startowe
+(`ReadAssignmentFromRoutes`) i Guided Local Search z limitem czasu, więc nigdy nie jest gorszy od NN
+(test właściwości). Odległości: postać zamknięta dla bloku z dwiema alejkami poprzecznymi, zgodna z Dijkstrą
+na jawnym grafie (test właściwości).
+
+## D-014 Wybór modelu prognozy przez backtest
+**Decyzja:** dla każdego SKU backtest (14 dni) ETS/Holt-Winters (trend tłumiony, sezonowość tygodniowa
+addytywna) vs naiwny sezonowy vs średnia 28 dni; wygrywa najmniejszy WAPE. Popyt sporadyczny (>50% zer lub
+średnia < 0,7) — bez ETS. Wyniki w cache (SKU, horyzont, ostatni dzień historii). LightGBM pominięty
+(opcjonalny w specyfikacji; przy 180 dniach historii i braku cech egzogenicznych nie daje przewagi).
+
+## D-015 Endpointy optymalizacji w WMS, usługa optymalizatora opcjonalna
+**Decyzja:** WMS liczy trasy, prognozy i slotting w procesie (te same funkcje `optimizer.*`); gdy ustawiono
+`OPTIMIZER_URL`, trasy liczy bezstanowa usługa `optimizer.service` (docker compose), z lokalnym fallbackiem.
+mcp-wms nie rozmawia z optymalizatorem bezpośrednio — wynik musi i tak zostać zwalidowany i zapisany w WMS.
+Osobny `mcp-optimizer` nie powstał (był opcjonalny): wszystkie obliczenia są dostępne jako narzędzia mcp-wms
+tylko do odczytu (`forecast_demand`, `suggest_wave_plan`, `analyze_slotting`).

@@ -179,6 +179,7 @@ class Wave(Base):
     created_wall: Mapped[datetime] = mapped_column(DateTime)
     released_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     released_wall: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    released_by: Mapped[str | None] = mapped_column(String(96), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     est_distance_m: Mapped[float] = mapped_column(Float, default=0.0)
     est_duration_s: Mapped[float] = mapped_column(Float, default=0.0)
@@ -198,6 +199,7 @@ class WaveAssignment(Base):
     wave_id: Mapped[str] = mapped_column(ForeignKey("waves.id"), index=True)
     worker_id: Mapped[str] = mapped_column(ForeignKey("workers.id"))
     order_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    trips: Mapped[list[list[str]]] = mapped_column(JSON, default=list)  # kursy wózka (listy zamówień)
 
     wave: Mapped[Wave] = relationship(back_populates="assignments")
     __table_args__ = (UniqueConstraint("wave_id", "worker_id", name="uq_wave_worker"),)

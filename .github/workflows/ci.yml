@@ -32,7 +32,7 @@ jobs:
       - run: mypy wms optimizer simulator mcp_wms orchestrator
 
   backend:
-    name: Testy backendu
+    name: Testy backendu (WMS, symulator)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,4 +41,21 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -e ".[dev]"
-      - run: pytest -q
+      - run: pytest -m "not security and not solver" -q
+
+  solver:
+    name: Testy solvera i benchmark tras
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: pytest -m solver -q
+      - run: python -m optimizer.benchmark --seed 42 --orders 20 --instances 10 --out benchmark-ci.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark
+          path: benchmark-ci.md

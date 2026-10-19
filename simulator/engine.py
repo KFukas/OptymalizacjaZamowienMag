@@ -133,37 +133,46 @@ class SimulationEngine:
                 yield self.env.timeout(to_next_hour)  # proces bez pamięci: losujemy ponownie w nowej godzinie
                 continue
             yield self.env.timeout(dt)
-            with self.lock, self.sf() as s:
-                self.order_factory.session = s
-                note = None
-                if self.rng.random() < INJECTION_ARRIVAL_P:
-                    note = self.order_factory.injection_note()
-                order = self.order_factory.create(self.now_dt(), note=note)
-                s.commit()
-                self._emit({"kind": "order_arrived", "order_id": order.id})
+            try:
+                with self.lock, self.sf() as s:
+                    self.order_factory.session = s
+                    note = None
+                    if self.rng.random() < INJECTION_ARRIVAL_P:
+                        note = self.order_factory.injection_note()
+                    order = self.order_factory.create(self.now_dt(), note=note)
+                    s.commit()
+                    self._emit({"kind": "order_arrived", "order_id": order.id})
+            except Exception:  # błąd jednego napływu nie zatrzymuje symulacji
+                log.exception("Nie udało się utworzyć zamówienia w symulacji")
 
     def _dispatcher(self) -> Generator[simpy.Event, Any, None]:
         while True:
-            with self.lock, self.sf() as s:
-                rows = s.execute(
-                    select(PickRoute, Wave)
-                    .join(Wave, Wave.id == PickRoute.wave_id)
-                    .where(
-                        PickRoute.status == RouteStatus.PLANNED.value,
-                        Wave.status.in_([WaveStatus.RELEASED.value, WaveStatus.IN_PROGRESS.value]),
-                    )
-                    .order_by(Wave.released_at, PickRoute.id)
-                ).all()
-                for route, wave in rows:
-                    if route.worker_id in self.busy:
-                        continue
-                    self.busy.add(route.worker_id)
-                    route.status = RouteStatus.ACTIVE.value
-                    if wave.status == WaveStatus.RELEASED.value:
-                        wave.status = WaveStatus.IN_PROGRESS.value
-                    self.env.process(self._worker(route.id, route.worker_id))
-                s.commit()
+            try:
+                self._dispatch_once()
+            except Exception:
+                log.exception("Błąd dyspozytora symulacji")
             yield self.env.timeout(10)
+
+    def _dispatch_once(self) -> None:
+        with self.lock, self.sf() as s:
+            rows = s.execute(
+                select(PickRoute, Wave)
+                .join(Wave, Wave.id == PickRoute.wave_id)
+                .where(
+                    PickRoute.status == RouteStatus.PLANNED.value,
+                    Wave.status.in_([WaveStatus.RELEASED.value, WaveStatus.IN_PROGRESS.value]),
+                )
+                .order_by(Wave.released_at, PickRoute.id)
+            ).all()
+            for route, wave in rows:
+                if route.worker_id in self.busy:
+                    continue
+                self.busy.add(route.worker_id)
+                route.status = RouteStatus.ACTIVE.value
+                if wave.status == WaveStatus.RELEASED.value:
+                    wave.status = WaveStatus.IN_PROGRESS.value
+                self.env.process(self._worker(route.id, route.worker_id))
+            s.commit()
 
     def _walk(self, worker_id: str, start: tuple[float, float], end: tuple[float, float], speed: float):  # type: ignore[no-untyped-def]
         pts = self.layout.path(start, end)
