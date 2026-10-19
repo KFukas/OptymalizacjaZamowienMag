@@ -246,5 +246,7 @@ def test_timeseries_and_recent_routes(ctx: Ctx) -> None:
         ctx.client.post(f"/waves/{wid}/routes", json={"worker_id": wk}, headers=h)
     recent = ctx.client.get("/routes/recent", headers=h).json()["routes"]
     assert recent and all(r["distance_m"] <= r["baseline_distance_m"] + 1e-6 for r in recent)
-    ts = ctx.client.get("/kpis/timeseries", params={"bucket_min": 30, "hours": 4}, headers=ctx.operator()).json()
+    ts = ctx.client.get(
+        "/kpis/timeseries", params={"bucket_min": 30, "hours": 4}, headers=ctx.operator()
+    ).json()
     assert len(ts["points"]) == 8 and {"lines_per_hour", "stockouts"} <= set(ts["points"][0])
