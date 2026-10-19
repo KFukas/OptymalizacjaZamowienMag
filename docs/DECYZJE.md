@@ -53,3 +53,23 @@ rollback zmian celu i status `failed` (`stale_state`).
 ## D-008 Uruchomienie WMS przez fabrykę aplikacji
 **Decyzja:** `uvicorn wms.main:create_app --factory`; import modułu nie tworzy bazy ani połączeń.
 Dla SQLite schemat tworzy `init_db` (dev/testy), dla PostgreSQL — `alembic upgrade head`.
+
+## D-009 Silnik symulacji w procesie WMS
+**Kontekst:** symulator musi zmieniać stan (kompletacja, braki, pakowanie) spójnie z transakcjami API.
+**Decyzja:** silnik SimPy działa w wątku procesu WMS (`wms/sim_runtime.py`) i zapisuje pod tą samą blokadą
+zapisu co API. Usługa `simulator` w docker compose to jednorazowe zadanie generatora (seed danych).
+**Konsekwencje:** jeden pisarz, brak rozjazdu stanów; skalowanie WMS na wiele procesów wymagałoby wydzielenia
+symulatora jako osobnej usługi z własnym tokenem (scope `sim:events`) — poza zakresem demo.
+
+## D-010 Reset „świata” zachowuje audyt i wnioski
+**Decyzja:** reset z UI (`POST /sim/control {action: reset}`) odtwarza tabele świata, ale zachowuje
+`audit_log`, `audit_head`, `users`, `approval_requests`, `idempotency_records`, `agent_reports`, `id_counters`.
+Oczekujące wnioski przechodzą w `expired` (powód `world_reset`); liczniki ID nie są zerowane, więc nowe
+zamówienia nie dostaną ID celów starych wniosków.
+**Konsekwencje:** łańcuch audytu jest ciągły przez całe życie instalacji. Pełne wyczyszczenie bazy — tylko
+`python -m simulator.generate` (operacja administracyjna poza aplikacją).
+
+## D-011 Model stanu fizycznego w symulacji
+**Decyzja:** `StockItem.sim_physical_qty` (None = zgodny z systemem) modeluje „prawdę z hali”. Kompletacja
+pobiera min(potrzeba, stan fizyczny); przy niedoborze powstaje zdarzenie `stockout` (`EVT-xxxxxx`), które
+może posłużyć jako dowód we wniosku o korektę. Pole nie jest eksponowane przez API ani MCP.

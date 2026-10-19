@@ -14,11 +14,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Engine
 
-from wms import __version__
+from wms import __version__, sim_runtime
 from wms.config import Settings, get_settings
 from wms.db import init_db, make_engine, make_sessionmaker
 from wms.errors import DomainError, domain_error_handler, request_validation_handler
-from wms.routers import approvals, audit, auth, catalog
+from wms.routers import approvals, audit, auth, catalog, sim
 
 log = logging.getLogger("wms")
 
@@ -29,7 +29,12 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        if settings.sim_autostart:
+            engine_sim = sim_runtime.get_engine(app)
+            if engine_sim is not None:
+                engine_sim.start_thread()
         yield
+        sim_runtime.shutdown(app)
 
     app = FastAPI(
         title="WMS – Magazyn Centralny Alfa",
@@ -53,7 +58,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.add_exception_handler(DomainError, domain_error_handler)
     app.add_exception_handler(RequestValidationError, request_validation_handler)
 
-    for module in (auth, catalog, approvals, audit):
+    for module in (auth, catalog, approvals, audit, sim):
         app.include_router(module.router)
 
     @app.get("/health", tags=["meta"])

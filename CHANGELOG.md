@@ -4,6 +4,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie:
 
 ## [Unreleased]
 
+### M2 – Generator danych + symulator SimPy
+- `python -m simulator.generate --seed --size small|medium|large --scenario`: układ (np. medium: 3 strefy,
+  20 alejek, 5000 lokalizacji), 2000 SKU z popularnością Pareto, celowo nieoptymalny slotting startowy,
+  180 dni historii sprzedaży (sezonowość tygodniowa, trend, promocje), zmiany i pracownicy, backlog zamówień,
+  przypadki prompt injection w notatkach, nazwach SKU i komentarzach.
+- Scenariusze: zwykły dzień, Black Friday, brak 2 pracowników, rozbieżność stanów, zamówienie podejrzane,
+  notatka z injection.
+- Silnik SimPy: napływ Poissona z profilem godzinowym, wykonywanie zwolnionych fal, braki towaru (zdarzenia
+  `stockout` jako dowody), kolejka pakowania, przerwy, pozycje pracowników na żywo; tempo x1–x600, pauza, reset.
+- API: `/sim/state`, `/sim/control`, `/sim/events`, `/sim/workers`, `/kpis` (lines/h, OTIF, utylizacja,
+  kolejka pakowania, braki, zatory, alerty), `/waves` (odczyt), `/routes/active`, `/reports`.
+
 ### M1 – Model domeny + WMS API
 - Encje SQLAlchemy 2 (strefy, lokalizacje, SKU, zapasy, zamówienia, fale, trasy, propozycje slottingu,
   wnioski o zatwierdzenie, audyt, idempotencja, użytkownicy, historia sprzedaży, zdarzenia symulacji).
