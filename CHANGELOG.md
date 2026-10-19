@@ -2,6 +2,18 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie: [SemVer](https://semver.org/lang/pl/).
 
+## [1.1.0] – 2026-10-19
+
+### Dodane
+- `Uruchom.bat` (Windows) i `uruchom.sh` (Linux/macOS) + `scripts/start_all.py`: start całego projektu jednym
+  plikiem (środowisko, dane, wolne porty, WMS, frontend, symulacja, agent, przeglądarka; zamknięcie zatrzymuje
+  wszystko), opcja `--nowy-dzien [scenariusz]`.
+
+### Poprawione
+- Sugestie fal dla zamówień po terminie miały cut-off w przeszłości (WMS: `cutoff_in_past`), przez co po dłuższej
+  symulacji agent przestawał tworzyć fale. Zaległe zamówienia trafiają teraz na najbliższy odjazd przewoźnika
+  (znacznik „zaległe”), z testem regresyjnym.
+
 ## [1.0.0] – 2026-10-19
 
 ### M7 – Evale, Docker, dokumentacja

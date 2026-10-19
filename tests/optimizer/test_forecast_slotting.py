@@ -123,3 +123,23 @@ def test_suggest_waves_groups_by_due() -> None:
     assert sug[0].cutoff == now + timedelta(hours=2)
     assert set(sug[0].order_ids[:6]) == {f"ORD-{i:08d}" for i in range(6)}
     assert not set(sug[0].worker_ids) & set(sug[1].worker_ids) if len(sug) > 1 else True
+
+
+def test_overdue_orders_go_to_next_departure() -> None:
+    """Regresja: zamówienia po terminie dawały sugestię z cut-off w przeszłości (WMS: cutoff_in_past)."""
+    from datetime import datetime, timedelta
+
+    from optimizer.waves import next_departure
+
+    now = datetime(2026, 11, 24, 19, 16)
+    orders = [
+        OpenOrder(f"ORD-{i:08d}", now - timedelta(days=2), "standard", frozenset("A"), 1, 2.0)
+        for i in range(5)
+    ] + [OpenOrder("ORD-00000099", now + timedelta(hours=3), "express", frozenset("B"), 1, 2.0)]
+    sug = suggest_waves(orders, [AvailableWorker("WRK-017", 12, 400)], now)
+    assert sug and sug[0].cutoff == datetime(2026, 11, 24, 21, 0)  # najbliższy odjazd po now + 45 min
+    assert sug[0].cutoff > now
+    assert "zaległe" in sug[0].tags and set(sug[0].order_ids[:5]) == {f"ORD-{i:08d}" for i in range(5)}
+    # po ostatnim odjeździe dnia: cut-off ograniczony horyzontem 12 h
+    late = datetime(2026, 11, 24, 21, 30)
+    assert next_departure(late, late + timedelta(hours=12)) == late + timedelta(hours=12)

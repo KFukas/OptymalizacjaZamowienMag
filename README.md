@@ -42,8 +42,8 @@ docker compose up --build -d                       # UI: http://localhost:5173 �
 docker compose --profile agent up -d orchestrator  # agent planujący (bez LLM; AGENT_MODE=llm dla Claude)
 ```
 
-Bez Dockera (Python 3.12 + Node 20), np. w PowerShell:
-`py -3.12 -m venv .venv; .venv\Scripts\pip install -e ".[dev]"; .\scripts\dev.ps1` — szczegóły, konta demo
+Bez Dockera (Python 3.12 + Node 20): na Windows **dwuklik w `Uruchom.bat`** (Linux/macOS: `./uruchom.sh`) —
+przygotowuje środowisko i startuje WMS, frontend, symulację i agenta naraz. Szczegóły, konta demo
 i podłączenie do Claude Code: **[docs/INSTRUKCJA_URUCHOMIENIA.md](docs/INSTRUKCJA_URUCHOMIENIA.md)**.
 
 ## Najważniejsze wyniki

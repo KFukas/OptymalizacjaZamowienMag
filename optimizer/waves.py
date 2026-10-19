@@ -3,7 +3,7 @@ i strefach, z limitem wielkości wynikającym z liczby dostępnych pracowników 
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 
 
@@ -39,6 +39,20 @@ class WaveSuggestion:
 PRIORITY_RANK = {"express": 0, "standard": 1, "economy": 2}
 
 
+CARRIER_DEPARTURES = (10, 14, 18, 21)
+
+
+def next_departure(earliest: datetime, latest: datetime) -> datetime:
+    """Najbliższy odjazd przewoźnika nie wcześniej niż `earliest`; gdy wypada po `latest` — `latest`."""
+    day = earliest.replace(minute=0, second=0, microsecond=0)
+    for offset in range(2):
+        for hour in CARRIER_DEPARTURES:
+            cand = (day + timedelta(days=offset)).replace(hour=hour)
+            if cand >= earliest:
+                return min(cand, latest)
+    return latest
+
+
 def suggest_waves(
     orders: list[OpenOrder],
     workers: list[AvailableWorker],
@@ -48,12 +62,21 @@ def suggest_waves(
     trips_per_worker: int = 2,
     max_orders_per_wave: int = 100,
     horizon: timedelta = timedelta(hours=12),
+    min_lead: timedelta = timedelta(minutes=45),
 ) -> list[WaveSuggestion]:
     if not orders or not workers:
         return []
     # cut-off fali musi mieścić się w horyzoncie planowania (WMS odrzuca cut-off > 12 h)
     orders = [o for o in orders if o.due_at <= now + horizon]
-    pool = sorted(orders, key=lambda o: (o.due_at, PRIORITY_RANK.get(o.priority, 9), o.order_id))
+    # Zamówienia po terminie (lub tuż przed nim) jadą najbliższym możliwym odjazdem — inaczej sugestia miałaby
+    # cut-off w przeszłości i WMS słusznie by ją odrzucił. Zachowujemy je na początku kolejki (są najpilniejsze).
+    catch_up = next_departure(now + min_lead, now + horizon - timedelta(minutes=5))
+    overdue_ids = {o.order_id for o in orders if o.due_at < now + min_lead}
+    orders = [replace(o, due_at=catch_up) if o.order_id in overdue_ids else o for o in orders]
+    pool = sorted(
+        orders,
+        key=lambda o: (o.due_at, o.order_id not in overdue_ids, PRIORITY_RANK.get(o.priority, 9), o.order_id),
+    )
     free = sorted(workers, key=lambda w: w.worker_id)
     suggestions: list[WaveSuggestion] = []
     while pool and free and len(suggestions) < max_waves:
@@ -75,7 +98,10 @@ def suggest_waves(
         zones = sorted({z for o in chosen for z in o.zones})
         express = sum(1 for o in chosen if o.priority == "express")
         minutes_left = int((cutoff - now).total_seconds() // 60)
+        late = sum(1 for o in chosen if o.order_id in overdue_ids)
         tags = []
+        if late:
+            tags.append("zaległe")
         if minutes_left < 90:
             tags.append("pilne")
         if express:
@@ -91,7 +117,7 @@ def suggest_waves(
                 tags=tags,
                 rationale=(
                     f"{len(chosen)} zamówień z terminem {cutoff:%H:%M} (zostało {minutes_left} min), "
-                    f"{express} ekspresowych, strefy {','.join(zones) or '-'}; "
+                    f"{express} ekspresowych, {late} zaległych (po terminie), strefy {','.join(zones) or '-'}; "
                     f"{len(crew)} pracowników × {trips_per_worker} kursy."
                 ),
             )

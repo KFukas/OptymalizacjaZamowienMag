@@ -35,6 +35,28 @@ Najważniejsze zmienne:
 
 ## 2. Uruchomienie lokalne
 
+### Najprościej: jeden plik
+
+**Windows:** dwuklik w **`Uruchom.bat`** w katalogu projektu. **Linux/macOS:** `./uruchom.sh`.
+
+Przy pierwszym uruchomieniu plik tworzy `.venv` i instaluje zależności, `.env` z losowymi sekretami, dane demo
+oraz `node_modules` frontendu. Potem za każdym razem:
+1. wybiera wolne porty (WMS: 8000, a gdy zajęty — 8010, 8020…; frontend: 5173…),
+2. startuje WMS z symulatorem, frontend i agenta (przez mcp-wms),
+3. włącza symulację i otwiera przeglądarkę,
+4. wypisuje adresy i konta demo.
+
+Zamknięcie okna albo Ctrl+C zatrzymuje wszystko. Logi trafiają do `var/logs/`. Opcje (`Uruchom.bat --help`):
+
+| Opcja | Działanie |
+|---|---|
+| `--nowy-dzien [SCENARIUSZ]` | nowy dzień symulacji (audyt i wnioski zostają), np. `--nowy-dzien notatka_injection` |
+| `--speed 60` | tempo symulacji (domyślnie ×10) |
+| `--llm` | agent Claude zamiast heurystyki (wymaga `ANTHROPIC_API_KEY` w `.env`) |
+| `--no-agent`, `--no-browser`, `--no-sim-start` | bez agenta / bez otwierania przeglądarki / symulacja zatrzymana |
+
+Poniżej uruchomienie ręczne, krok po kroku.
+
 ### Windows (PowerShell)
 
 ```powershell
