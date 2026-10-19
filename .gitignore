@@ -1,0 +1,50 @@
+# Sekrety — NIGDY w repo (repo jest publiczne)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+htmlcov/
+
+# Dane lokalne / bazy dev
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+data/
+var/
+logs/
+*.log
+audit_fallback*.jsonl
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Claude Code — lokalne ustawienia użytkownika
+.claude/settings.local.json

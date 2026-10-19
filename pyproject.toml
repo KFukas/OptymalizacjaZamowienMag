@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optymalizacja-kompletacji"
+version = "1.0.0"
+description = "Optymalizacja kompletacji zamówień w syntetycznym magazynie e-commerce z agentem AI i bezpiecznym serwerem MCP"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy>=2.0.30,<2.1",
+  "alembic>=1.13",
+  "pydantic>=2.7,<3",
+  "pydantic-settings>=2.3",
+  "pyjwt>=2.8",
+  "python-dotenv>=1.0",
+  "httpx>=0.27",
+  "pyyaml>=6.0",
+  "simpy>=4.1",
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "statsmodels>=0.14",
+  "ortools>=9.10",
+  "mcp>=1.9,<2",
+  "anthropic>=0.40",
+  "psycopg[binary]>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "hypothesis>=6.100",
+  "ruff>=0.6",
+  "mypy>=1.10",
+  "types-PyYAML",
+]
+
+[tool.setuptools.packages.find]
+include = ["wms*", "optimizer*", "simulator*", "mcp_wms*", "orchestrator*", "evals*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["frontend", "wms/migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM"]
+ignore = ["S101", "S311", "B008", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S108", "B017"]
+"simulator/seed_users.py" = ["S105", "S106"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = false
+check_untyped_defs = true
+plugins = ["pydantic.mypy"]
+exclude = ["wms/migrations/", "frontend/", "build/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "security: testy granicy uprawnień MCP (offline, bez LLM)",
+  "solver: testy solvera i heurystyk",
+  "slow: dłuższe testy (benchmarki)",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
