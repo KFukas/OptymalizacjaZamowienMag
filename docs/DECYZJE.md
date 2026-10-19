@@ -100,3 +100,28 @@ addytywna) vs naiwny sezonowy vs średnia 28 dni; wygrywa najmniejszy WAPE. Popy
 mcp-wms nie rozmawia z optymalizatorem bezpośrednio — wynik musi i tak zostać zwalidowany i zapisany w WMS.
 Osobny `mcp-optimizer` nie powstał (był opcjonalny): wszystkie obliczenia są dostępne jako narzędzia mcp-wms
 tylko do odczytu (`forecast_demand`, `suggest_wave_plan`, `analyze_slotting`).
+
+## D-016 mcp-wms: FastMCP z własnym potokiem `tools/list` i `tools/call`
+**Kontekst:** dekorator `@mcp.tool` w FastMCP buduje schemat z sygnatury funkcji, a nadmiarowe pola argumentów
+są po cichu ignorowane; opisy narzędzi i walidacja są rozproszone po funkcjach.
+**Decyzja:** `PolicyEnforcedMCP(FastMCP)` nadpisuje `list_tools` i `call_tool`. Narzędzia to wpisy rejestru
+(`mcp_wms/tools.py`: nazwa, model Pydantic `extra="forbid", strict=True`, wymagany scope WMS, handler).
+Każde wywołanie przechodzi jeden potok PEP (`mcp_wms/policy/`) i jest audytowane w WMS. Z FastMCP korzystamy
+tylko jako z warstwy transportu (stdio, streamable HTTP).
+**Konsekwencje:** nie da się dodać narzędzia z pominięciem polityki; nieznane i niedozwolone narzędzia dają
+identyczną odpowiedź; `tools/list` pokazuje tylko narzędzia dozwolone dla roli klienta.
+
+## D-017 Tożsamość klienta MCP: token → rola w `config/policy.yaml`
+**Decyzja:** stdio — token z `MCP_CLIENT_TOKEN`/`MCP_AGENT_TOKEN` procesu; HTTP — `Authorization: Bearer` przy
+każdym żądaniu (token stdio nie jest wtedy używany). Polityka wskazuje nazwy zmiennych z tokenami (nie wartości),
+serwer porównuje SHA-256 w czasie stałym, tokeny < 16 znaków są ignorowane. Allowlista to dokładne nazwy
+(brak wildcardów), plik polityki ma ścisły schemat (`extra="forbid"`, `default_decision: deny`).
+
+## D-018 Wzorce ID z `[0-9]` zamiast `\d`
+**Kontekst:** w Pythonie i w silniku regex Pydantic `\d` dopasowuje cyfry Unicode (np. arabskie).
+**Decyzja:** wszystkie wzorce ID używają `[0-9]`; test `test_invalid_id_formats` obejmuje cyfry arabskie.
+
+## D-019 Teksty niezaufane w odpowiedziach MCP
+**Decyzja:** notatki klientów, nazwy SKU, komentarze pracowników i uzasadnienia fal zwracane są jako
+`{"untrusted_text", "instruction_signals", "warning"}`. Heurystyka sygnałów nie jest zabezpieczeniem — tylko
+informacją dla modelu i kierownika; zabezpieczeniem jest brak możliwości wykonania operacji nieodwracalnej.

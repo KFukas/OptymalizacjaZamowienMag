@@ -4,6 +4,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie:
 
 ## [Unreleased]
 
+### M4 – mcp-wms: serwer MCP z egzekwowaniem polityki
+- 19 wąsko typowanych narzędzi (odczyt, propozycje, wnioski) — bez narzędzi ogólnych i bez operacji
+  nieodwracalnych; schematy Pydantic `extra="forbid"`, strict, wzorce ID, zakresy, limity list.
+- PEP (`mcp_wms/policy/`): tożsamość klienta (stdio/HTTP Bearer) → rola z `config/policy.yaml` (deny-by-default)
+  → allowlista po nazwie → scope tokenu usługowego → walidacja → rate limit → WMS → audyt allow/deny.
+- Klient WMS z tokenem usługowym (`client_credentials`) bez scope'ów kierownika; atrybucja `X-Acting-Principal`.
+- Teksty z danych jako `untrusted_text` z sygnałami injection; ustrukturyzowane błędy bez szczegółów wnętrza;
+  awaryjny lokalny dziennik audytu przy niedostępności WMS.
+- `tests/security/`: 97 przypadków (narzędzia ukryte, tożsamość, dodatkowe pola, zakresy, typy, formaty ID,
+  wstrzyknięcia, rozmiary, zmienione opisy narzędzi, zatwierdzanie tokenem agenta, podrobione/cudze/wygasłe
+  wnioski, replay, wyścig z optimistic locking, rate limit, agregacja korekt, kolejność wywołań, slotting do
+  pełnej/niekompatybilnej lokalizacji, manipulacja audytem, token agenta na endpointach kierownika, izolacja
+  od bazy, transport HTTP); osobny job CI.
+
 ### M3 – Optymalizacja
 - Graf magazynu (postać zamknięta + jawny graf zgodny z Dijkstrą), macierz odległości.
 - Trasy: OR-Tools (TSP, GLS, start od NN), S-shape, largest gap, nearest neighbour; trasy wielokursowe.

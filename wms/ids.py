@@ -5,15 +5,15 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-ORDER_ID = r"^ORD-\d{8}$"
-SKU_ID = r"^SKU-\d{6}$"
-LOCATION_ID = r"^LOC-[A-Z]\d{2}-\d{2}-\d$"
-WORKER_ID = r"^WRK-\d{3}$"
-WAVE_ID = r"^WAVE-\d{6}$"
-APPROVAL_ID = r"^APR-\d{6}$"
-RESLOTTING_ID = r"^RSL-\d{6}$"
-SHIFT_ID = r"^SHIFT-\d$"
-EVENT_REF = r"^EVT-\d{6,9}$"
+ORDER_ID = r"^ORD-[0-9]{8}$"
+SKU_ID = r"^SKU-[0-9]{6}$"
+LOCATION_ID = r"^LOC-[A-Z][0-9]{2}-[0-9]{2}-[0-9]$"
+WORKER_ID = r"^WRK-[0-9]{3}$"
+WAVE_ID = r"^WAVE-[0-9]{6}$"
+APPROVAL_ID = r"^APR-[0-9]{6}$"
+RESLOTTING_ID = r"^RSL-[0-9]{6}$"
+SHIFT_ID = r"^SHIFT-[0-9]$"
+EVENT_REF = r"^EVT-[0-9]{6,9}$"
 IDEMPOTENCY_KEY = r"^[A-Za-z0-9_-]{8,64}$"
 
 _WIDTH = {"ORD": 8, "WAVE": 6, "APR": 6, "RSL": 6}

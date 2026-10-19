@@ -1,0 +1,67 @@
+# Polityka serwera mcp-wms (Policy Enforcement Point). Deny-by-default.
+#
+# Ten plik jest JEDYNYM źródłem uprawnień klientów MCP. Opisy narzędzi (docstringi, description w MCP)
+# nie niosą żadnych uprawnień — zmiana opisu nie zmienia zachowania serwera (tests/security/).
+#
+# Tożsamość klienta MCP = token (Bearer w HTTP albo MCP_CLIENT_TOKEN dla stdio). W repo NIE ma tokenów —
+# wskazujemy tylko nazwy zmiennych środowiskowych; serwer porównuje skróty SHA-256 w czasie stałym.
+version: 1
+default_decision: deny
+
+principals:
+  - id: orchestrator
+    token_env: MCP_AGENT_TOKEN
+    role: planner_agent
+  - id: observer
+    token_env: MCP_READONLY_TOKEN
+    role: observer_agent
+
+roles:
+  planner_agent:
+    description: Agent planujący (orkiestrator, Claude Code). Odczyt, propozycje, wnioski — bez decyzji.
+    allow_tools:
+      - list_open_orders
+      - get_order
+      - get_inventory
+      - get_layout
+      - list_workers
+      - get_kpis
+      - get_wave
+      - suggest_wave_plan
+      - forecast_demand
+      - analyze_slotting
+      - propose_wave
+      - discard_wave_proposal
+      - compute_pick_route
+      - release_wave
+      - propose_reslotting
+      - request_order_cancellation
+      - request_inventory_adjustment
+      - get_approval_status
+      - submit_cycle_report
+  observer_agent:
+    description: Tylko odczyt (np. raportowanie, demonstracja).
+    allow_tools:
+      - list_open_orders
+      - get_order
+      - get_inventory
+      - get_layout
+      - list_workers
+      - get_kpis
+      - get_wave
+
+# Limity per (klient, narzędzie), okno przesuwne. WMS niezależnie egzekwuje własne limity (obrona w głąb).
+rate_limits:
+  default: { calls: 120, per_seconds: 60 }
+  propose_wave: { calls: 30, per_seconds: 3600 }
+  release_wave: { calls: 6, per_seconds: 3600 }
+  compute_pick_route: { calls: 120, per_seconds: 3600 }
+  propose_reslotting: { calls: 10, per_seconds: 3600 }
+  forecast_demand: { calls: 20, per_seconds: 60 }
+  request_order_cancellation: { calls: 10, per_seconds: 3600 }
+  request_inventory_adjustment: { calls: 10, per_seconds: 3600 }
+  submit_cycle_report: { calls: 30, per_seconds: 3600 }
+
+limits:
+  max_argument_bytes: 32768     # większe argumenty są odrzucane przed walidacją
+  max_result_bytes: 200000      # wynik obcinany (ochrona kontekstu agenta)
