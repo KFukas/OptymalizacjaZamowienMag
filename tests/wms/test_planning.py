@@ -237,3 +237,14 @@ def test_location_with_reported_stockout_is_quarantined(ctx: Ctx) -> None:
     # w danych testowych jest zdarzenie braku EVT-000001 dla LOC-B04-05-1 / SKU-000005
     r = _propose(ctx, ctx.service(), order_ids=["ORD-00000005"], worker_ids=["WRK-001"])
     assert r.json()["reason"] == "insufficient_stock"
+
+
+def test_timeseries_and_recent_routes(ctx: Ctx) -> None:
+    h = ctx.service()
+    wid = _propose(ctx, h).json()["wave_id"]
+    for wk in ("WRK-001", "WRK-002"):
+        ctx.client.post(f"/waves/{wid}/routes", json={"worker_id": wk}, headers=h)
+    recent = ctx.client.get("/routes/recent", headers=h).json()["routes"]
+    assert recent and all(r["distance_m"] <= r["baseline_distance_m"] + 1e-6 for r in recent)
+    ts = ctx.client.get("/kpis/timeseries", params={"bucket_min": 30, "hours": 4}, headers=ctx.operator()).json()
+    assert len(ts["points"]) == 8 and {"lines_per_hour", "stockouts"} <= set(ts["points"][0])

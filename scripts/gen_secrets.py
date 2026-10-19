@@ -8,7 +8,6 @@ import secrets
 KEYS = [
     "JWT_SECRET",
     "WMS_MCP_CLIENT_SECRET",
-    "WMS_SIM_CLIENT_SECRET",
     "MCP_AGENT_TOKEN",
     "MCP_READONLY_TOKEN",
 ]

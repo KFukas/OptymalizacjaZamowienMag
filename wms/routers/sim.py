@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from datetime import timedelta
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import select
@@ -117,6 +118,50 @@ def kpis(
     return compute_kpis(session, window)
 
 
+@router.get("/kpis/timeseries")
+def kpi_timeseries(
+    bucket_min: Annotated[int, Query(ge=5, le=120)] = 15,
+    hours: Annotated[int, Query(ge=1, le=24)] = 8,
+    session: Session = Depends(get_session),
+    _p: Principal = Depends(require_scope("kpis:read")),
+) -> dict:
+    """Linie/h, braki i wysyłki w kubełkach czasu symulacji (do wykresów)."""
+    now = sim_now(session)
+    start = now - timedelta(hours=hours)
+    bucket = timedelta(minutes=bucket_min)
+    n = int((now - start) / bucket)
+    points: list[dict[str, Any]] = [
+        {
+            "t": (start + bucket * (i + 1)).isoformat(),
+            "lines_per_hour": 0.0,
+            "stockouts": 0,
+            "shipped": 0,
+            "on_time": 0,
+        }
+        for i in range(n)
+    ]
+    rows = session.execute(
+        select(SimEvent.ts_sim, SimEvent.kind, SimEvent.details).where(
+            SimEvent.ts_sim > start,
+            SimEvent.ts_sim <= now,
+            SimEvent.kind.in_(["pick", "stockout", "shipped"]),
+        )
+    ).all()
+    per_hour = 60.0 / bucket_min
+    for ts, kind, details in rows:
+        idx = min(n - 1, int((ts - start) / bucket))
+        if idx < 0:
+            continue
+        if kind == "pick":
+            points[idx]["lines_per_hour"] += per_hour
+        elif kind == "stockout":
+            points[idx]["stockouts"] += 1
+        else:
+            points[idx]["shipped"] += 1
+            points[idx]["on_time"] += int(bool(details.get("on_time")))
+    return {"sim_now": now.isoformat(), "bucket_min": bucket_min, "points": points}
+
+
 @router.get("/sim/events")
 def events(
     kind: Annotated[
@@ -211,6 +256,30 @@ def active_routes(
         .limit(60)
     ).scalars()
     return {"routes": [route_view(r) for r in rows]}
+
+
+@router.get("/routes/recent")
+def recent_routes(
+    limit: Annotated[int, Query(ge=1, le=200)] = 40,
+    session: Session = Depends(get_session),
+    _p: Principal = Depends(require_scope("waves:read")),
+) -> dict:
+    """Podsumowanie ostatnich tras (bez łamanych) — porównanie z S-shape."""
+    rows = session.execute(select(PickRoute).order_by(PickRoute.id.desc()).limit(limit)).scalars()
+    return {
+        "routes": [
+            {
+                "wave_id": r.wave_id,
+                "worker_id": r.worker_id,
+                "algorithm": r.algorithm,
+                "distance_m": round(r.distance_m, 1),
+                "baseline_distance_m": round(r.baseline_distance_m, 1),
+                "status": r.status,
+                "stops": sum(1 for st in r.stops if st.get("type") == "pick"),
+            }
+            for r in rows
+        ]
+    }
 
 
 @router.get("/reports")

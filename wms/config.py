@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     jwt_ttl_minutes: int = 480
     service_token_ttl_minutes: int = 60
     approval_ttl_minutes: int = 240
-    cors_origins: str = "http://localhost:5173"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     # Sekret klienta usługowego mcp-wms (client_credentials). Scope'y tego klienta są zdefiniowane
     # w SERVICE_CLIENTS poniżej — klient nie może ich rozszerzyć żądaniem.

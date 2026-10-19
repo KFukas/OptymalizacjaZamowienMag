@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokeny ról (paleta referencyjna, walidowana pod CVD). Tryb ciemny wybrany osobno, nie odwrócony. */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface-1: #fcfcfb;
+  --surface-2: #f0efec;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --gridline: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+  --series-1: #2a78d6; /* niebieski */
+  --series-2: #eb6834; /* pomarańczowy */
+  --series-3: #1baf7a; /* akwamaryna */
+  --series-4: #eda100; /* żółty */
+  --series-5: #e87ba4; /* magenta */
+  --series-6: #008300; /* zielony */
+  --series-7: #6250d6; /* fiolet */
+  --series-8: #e34948; /* czerwony */
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+  --success-text: #006300;
+  --zone-a: #eef4fc;
+  --zone-b: #f4f3ef;
+  --zone-c: #eaf6f1;
+  --rack: #c3c2b7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface-1: #1a1a19;
+    --surface-2: #383835;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --gridline: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --success-text: #0ca30c;
+    --zone-a: #18202b;
+    --zone-b: #212120;
+    --zone-c: #16231e;
+    --rack: #4a4a46;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface-1: #1a1a19;
+  --surface-2: #383835;
+  --text-primary: #f0efec;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --gridline: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --success-text: #0ca30c;
+  --zone-a: #18202b;
+  --zone-b: #212120;
+  --zone-c: #16231e;
+  --rack: #4a4a46;
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--text-primary);
+}
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes route-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.route-animated {
+  stroke-dasharray: 6 6;
+  animation: route-dash 1.2s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-animated {
+    animation: none;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--series-1);
+  outline-offset: 2px;
+}

@@ -4,6 +4,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie:
 
 ## [Unreleased]
 
+### M6 – Frontend
+- React 18 + Vite + TypeScript + Tailwind + TanStack Query + Recharts (`frontend/`).
+- Mapa SVG: strefy, alejki, regały; warstwy: heatmapa rotacji/zapełnienia, pracownicy na żywo, animowane trasy
+  aktywnych fal, strzałki propozycji przesunięć, zatory w alejkach.
+- Fale: Gantt (szacowany czas vs cut-off, postęp), tabela z „dlaczego ta fala?”.
+- Wąskie gardła: kafle KPI, alerty (ikona + etykieta), linie/h w czasie, pobrania wg alejek,
+  porównanie agent vs S-shape, raporty agenta.
+- Panel kierownika: kolejka wniosków z flagami bezpieczeństwa, źródłem danych (tekst niezaufany), dowodem,
+  diffem stanu; decyzja z komentarzem i PIN-em; akceptacja propozycji slottingu.
+- Audyt: filtry, weryfikacja łańcucha hashy. Sterowanie symulacją, tryb jasny/ciemny, paleta odporna na
+  daltonizm (walidowana), teksty z danych wyłącznie jako tekst; testy Vitest; job CI.
+- WMS: `/kpis/timeseries`, `/routes/recent`; sugestie fal ograniczone horyzontem 12 h; analiza slottingu
+  pomija lokalizacje z oczekujących propozycji. Skrypty `scripts/demo_day.py`, `scripts/screenshots.py`.
+
 ### M5 – Orkiestrator + skill
 - `python -m orchestrator --mode heuristic|llm --cycles N --every-sim-min M [--mcp-url]`: pętla co N minut
   symulacji; połączenie z mcp-wms przez stdio (proces potomny) albo streamable HTTP; dziennik wszystkich wywołań

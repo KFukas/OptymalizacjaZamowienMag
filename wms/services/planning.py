@@ -144,6 +144,13 @@ def slotting_analysis(session: Session, max_moves: int = 20, top: int = 30) -> d
     for s in stock:
         qty_by_sku[s.sku_id] += s.qty
     classes = classify(demand, skus, dict(qty_by_sku))
+    # lokalizacje z aktywnych fal i z oczekujących propozycji przesunięć nie są ponownie proponowane
+    pending_locs: set[str] = set()
+    for p in session.execute(
+        select(ReslottingProposal).where(ReslottingProposal.status == ReslottingStatus.PROPOSED.value)
+    ).scalars():
+        for m in p.moves:
+            pending_locs.update((m["from_location"], m["to_location"]))
     moves = propose_moves(
         layout,
         locs,
@@ -151,7 +158,7 @@ def slotting_analysis(session: Session, max_moves: int = 20, top: int = 30) -> d
         stock,
         classes,
         max_moves=max_moves,
-        excluded_locations=frozenset(_active_locations(session)),
+        excluded_locations=frozenset(_active_locations(session) | pending_locs),
     )
     loc_by_id = {loc.location_id: loc for loc in locs}
     abc = Counter(c.abc for c in classes.values())

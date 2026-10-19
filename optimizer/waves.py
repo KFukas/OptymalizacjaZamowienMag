@@ -4,7 +4,7 @@ i strefach, z limitem wielkości wynikającym z liczby dostępnych pracowników 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 @dataclass(frozen=True)
@@ -47,9 +47,12 @@ def suggest_waves(
     max_waves: int = 3,
     trips_per_worker: int = 2,
     max_orders_per_wave: int = 100,
+    horizon: timedelta = timedelta(hours=12),
 ) -> list[WaveSuggestion]:
     if not orders or not workers:
         return []
+    # cut-off fali musi mieścić się w horyzoncie planowania (WMS odrzuca cut-off > 12 h)
+    orders = [o for o in orders if o.due_at <= now + horizon]
     pool = sorted(orders, key=lambda o: (o.due_at, PRIORITY_RANK.get(o.priority, 9), o.order_id))
     free = sorted(workers, key=lambda w: w.worker_id)
     suggestions: list[WaveSuggestion] = []

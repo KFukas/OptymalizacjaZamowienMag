@@ -152,3 +152,18 @@ cyklu, jeśli przyczyna odmowy jest przejściowa.
 **Decyzja:** `.claude/settings.json` — allowlista komend testów/lint/benchmarku i narzędzi MCP tylko do odczytu;
 narzędzia zapisujące mcp-wms wymagają potwierdzenia (`ask`); odczyt i edycja `.env` zabronione. Serwer
 `mcp-wms` z `.mcp.json` uruchamiany przez `scripts/run_mcp_wms.py` (wybiera Pythona z `.venv` na Windows/Linux).
+
+## D-024 Frontend: polling zamiast WebSocket, SVG zamiast Canvas
+**Decyzja:** dane na żywo przez TanStack Query z `refetchInterval` (pozycje pracowników co 1 s przy działającej
+symulacji, KPI co 3–5 s). WebSocket pominięty: przy kilkudziesięciu pracownikach polling jest prostszy,
+odporny na restart WMS i nie wymaga drugiej ścieżki uwierzytelniania. Mapa w czystym SVG (5000 lokalizacji
+agregowanych do przęseł, <2000 elementów) — natywne `<title>` jako warstwa podpowiedzi, skalowanie bez utraty
+jakości. Brak routera — zakładki z zapamiętaniem w `localStorage`.
+**Konsekwencje:** opóźnienie widoku ≤1 s; przy dużych instalacjach należałoby dodać `/ws/sim`.
+
+## D-025 Paleta i dostępność wykresów
+**Decyzja:** paleta referencyjna (kategorie w stałej kolejności, sekwencyjna niebieska dla heatmap, statusy
+zarezerwowane, zawsze z ikoną i etykietą), osobno dobrane wartości trybu ciemnego. Druga rampa (zatory,
+pomarańczowa, porządkowa) zwalidowana skryptem walidatora palety (jasny koniec ≥ 2:1 w obu trybach).
+Animacje wykresów odświeżanych na żywo wyłączone (restart animacji przy każdym odpytaniu dawał mylący obraz).
+Tabela danych pod porównaniem tras; tekst z danych renderowany wyłącznie jako tekst (test Vitest z `<script>`).
